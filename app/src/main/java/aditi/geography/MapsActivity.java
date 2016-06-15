@@ -16,41 +16,37 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
-import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
-
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
     TextToSpeech tts;
-    Map<String, String> hashMap = new HashMap<>();
-    private String selectedState;
+    Map<String, String> countryCapitalMap = new HashMap<>();
+    Map<String, String> currencyMap = new HashMap<>();
+    private String selectedStateOrCountry;
     Properties properties = new Properties();
 
 
     private static String TAG = "MapsActivity";
+    private String urlString = "https://restcountries.eu/rest/v1/all";
+    String propFileUSA = "states.properties";
+    String currencyCodes = "currencycodes.csv";
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "Invoking onCreate");
+        Log.d(TAG, "size of countryCapitalMap" + countryCapitalMap.size());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -72,116 +68,86 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onPause() {
-
+        Log.d(TAG, "Invoking onPause");
         if (tts != null) {
             tts.stop();
             tts.shutdown();
         }
-        super.onPause();
 
+
+        super.onPause();
     }
 
     @Override
     protected void onStop() {
-
+        Log.d(TAG, "Invoking onStop");
         if (tts != null) {
             tts.stop();
             tts.shutdown();
         }
+        if (SSLUtils.conn != null) {
+            SSLUtils.conn.disconnect();
+        }
 
         super.onStop();
-
     }
 
     private void initMap() {
-        String propFileUSA = "states.properties";
-        InputStream is = getClass().getClassLoader().getResourceAsStream(propFileUSA);
-        try {
-            if (is != null) {
-                properties.load(is);
+
+        if (properties != null || countryCapitalMap != null || currencyMap != null) {
+            InputStream stream = getClass().getClassLoader().getResourceAsStream(propFileUSA);
+            try {
+                if (stream != null) {
+                    properties.load(stream);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Could not load prop file");
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Could not load prop file");
+
+            String line;
+            String arr[];
+            stream = getClass().getClassLoader().getResourceAsStream(currencyCodes);
+            try {
+                if (stream != null) {
+                    BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+                    while ((line = br.readLine()) != null) {
+                        arr = line.split(",");
+                        currencyMap.put(arr[0], arr[1]);
+                    }
+                }
+            } catch (Exception e) {
+
+            }
+
+
+            new LongRunningGetIO().execute();
         }
-        new LongRunningGetIO().execute();
     }
 
+    /**
+     * Make rest call to api to get countries/capitals and populate map
+     */
     private void background() {
-        String urlString = "https://restcountries.eu/rest/v1/all";
-        BufferedReader br = null;
-        HttpsURLConnection con = null;
+        InputStream inputStream = null;
         try {
-            Log.d(TAG, "Connecting to the rest endpoint");
-
-            TrustManager[] trustAllCerts = new TrustManager[]{
-                    new X509TrustManager() {
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                            return null;
-                        }
-
-                        public void checkClientTrusted(
-                                java.security.cert.X509Certificate[] certs, String authType) {
-                        }
-
-                        public void checkServerTrusted(
-                                java.security.cert.X509Certificate[] certs, String authType) {
-                        }
-                    }
-            };
-
-            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            trustStore.load(null, null);
-
-            String algorithm = TrustManagerFactory.getDefaultAlgorithm();
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(algorithm);
-            tmf.init(trustStore);
-
-            SSLContext context = SSLContext.getInstance("SSL");
-            context.init(null, trustAllCerts, null);
-            URL url = new URL(urlString);
-            con =
-                    (HttpsURLConnection) url.openConnection();
-            con.setSSLSocketFactory(context.getSocketFactory());
-            InputStream in = con.getInputStream();
-
-            //Read json result
-            br = new BufferedReader(new InputStreamReader(in));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-
-
-            Log.d(TAG, "response code " + con.getResponseCode());
-
-            JSONArray jsonarray = new JSONArray(sb.toString());
-            String countryName;
-
-            for (int i = 0; i < jsonarray.length(); i++) {
-                JSONObject jsonobject = jsonarray.getJSONObject(i);
-
-                countryName = jsonobject.getString("name");
-                hashMap.put(countryName, String.format("The capital of %s is %s",
-                        countryName, jsonobject.getString("capital")));
-            }
-
+            inputStream = SSLUtils.invokeHttpsApi(urlString);
+            Log.d(TAG, "result is " + inputStream.toString());
 
         } catch (Exception e) {
-            Log.e(TAG, "failed to connect to REST " + e.toString());
-
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                    con.disconnect();
-                } catch (Exception e) {
-                    Log.e(TAG, "Unable to close stream", e);
-                }
-            }
+            Log.e(TAG, "Unable to talk to rest countries api", e);
         }
 
+        try {
+            SSLUtils.parseJsonCountriesOutput(inputStream, countryCapitalMap, currencyMap);
+        } catch (Exception e) {
+            Log.e(TAG, "unable to parse json output from countries api");
+        } finally {
+            try {
+                inputStream.close();
+            } catch (Exception e) {
 
+            }
+        }
     }
 
 
@@ -189,14 +155,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Convert text to speech
      */
     private void ConvertTextToSpeech() {
-        if (properties.get(selectedState) != null) {
-            tts.speak(String.format("This is %s.%s", selectedState, properties.get(selectedState)),
+        if (properties.get(selectedStateOrCountry) != null) {
+            tts.speak(String.format("This is %s %s", selectedStateOrCountry, properties.get(selectedStateOrCountry)),
                     TextToSpeech.QUEUE_FLUSH, null);
 
-        } else if (hashMap.get(selectedState) != null) {
-            tts.speak(hashMap.get(selectedState), TextToSpeech.QUEUE_FLUSH, null);
+        } else if (countryCapitalMap.get(selectedStateOrCountry) != null) {
+            tts.speak(countryCapitalMap.get(selectedStateOrCountry), TextToSpeech.QUEUE_FLUSH, null);
         } else {
-            tts.speak(selectedState, TextToSpeech.QUEUE_FLUSH, null);
+            tts.speak(selectedStateOrCountry, TextToSpeech.QUEUE_FLUSH, null);
         }
     }
 
@@ -225,29 +191,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     String selectedCountry;
                     if (add.size() > 0) {
                         selectedCountry = add.get(0).getCountryName();
-                        selectedState = selectedCountry;
+                        selectedStateOrCountry = selectedCountry;
 
                         Log.d("country", selectedCountry);
                         //For usa go with states . All other countries - it gives the capital
                         if (selectedCountry.equalsIgnoreCase("United States") ||
                                 selectedCountry.equalsIgnoreCase("US")) {
-                            selectedState = add.get(0).getAdminArea();
+                            selectedStateOrCountry = add.get(0).getAdminArea();
                         }
-                        Log.d("state", selectedState);
+                        Log.d("state", selectedStateOrCountry);
                         ConvertTextToSpeech();
                     }
-                    Log.d("arg0", arg0.latitude + "-" + arg0.longitude);
                 } catch (Exception e) {
-
+                    Log.e(TAG, "Failed to initialize map", e);
                 }
             }
         });
         mMap = googleMap;
 
         // Add a marker in California and move the camera
-        LatLng sydney = new LatLng(37, -122);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Click anywhere to get more info "));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng californiaMarker = new LatLng(37, -122);
+        mMap.addMarker(new MarkerOptions().position(californiaMarker).title("Click anywhere to get more info"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(californiaMarker));
     }
 
     /*
