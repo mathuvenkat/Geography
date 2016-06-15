@@ -94,34 +94,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void initMap() {
 
-        if (properties != null || countryCapitalMap != null || currencyMap != null) {
-            InputStream stream = getClass().getClassLoader().getResourceAsStream(propFileUSA);
-            try {
-                if (stream != null) {
-                    properties.load(stream);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Could not load prop file");
+
+        InputStream stream = getClass().getClassLoader().getResourceAsStream(propFileUSA);
+        try {
+            if (stream != null) {
+                properties.load(stream);
             }
-
-            String line;
-            String arr[];
-            stream = getClass().getClassLoader().getResourceAsStream(currencyCodes);
-            try {
-                if (stream != null) {
-                    BufferedReader br = new BufferedReader(new InputStreamReader(stream));
-                    while ((line = br.readLine()) != null) {
-                        arr = line.split(",");
-                        currencyMap.put(arr[0], arr[1]);
-                    }
-                }
-            } catch (Exception e) {
-
-            }
-
-
-            new LongRunningGetIO().execute();
+        } catch (Exception e) {
+            Log.e(TAG, "Could not load prop file");
         }
+
+        String line;
+        String arr[];
+        stream = getClass().getClassLoader().getResourceAsStream(currencyCodes);
+        try {
+            if (stream != null) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+                while ((line = br.readLine()) != null) {
+                    arr = line.split(",");
+                    currencyMap.put(arr[0], arr[1]);
+                }
+            }
+        } catch (Exception e) {
+
+        }
+
+
+        new LongRunningGetIO().execute();
+        
     }
 
     /**
