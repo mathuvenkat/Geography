@@ -1,6 +1,6 @@
 package aditi.geography;
 
-import android.util.Log;
+//import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -58,7 +58,7 @@ public class SSLUtils {
         URL url = new URL(urlString);
         conn = (HttpsURLConnection) url.openConnection();
         conn.setSSLSocketFactory(context.getSocketFactory());
-        Log.d(TAG, "Result from https connection is " + conn.getResponseMessage());
+        //Log.d(TAG, "Result from https connection is " + conn.getResponseMessage());
         inputStream = conn.getInputStream();
         return inputStream;
 

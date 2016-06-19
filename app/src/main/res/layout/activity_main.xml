@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="aditi.geography.MainActivity">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textMultiLine"
+        android:text="Want to know more about our world ? \nTouch anywhere on the map to know some facts about the country\n\nIf its within the USA, you will hear some trivia about the state you are on\n\nThis app requires sound to be ON."
+        android:textStyle="italic"
+        android:textSize="9pt" />
+
+    <Button
+        android:id="@+id/newGame_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="74dp"
+        android:text="Start" />
+
+
+    <Button
+        android:id="@+id/exit_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/newGame_button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="74dp"
+        android:text="Exit" />
+
+</RelativeLayout>

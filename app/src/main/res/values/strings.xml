@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Geography - Know our world</string>
     <string name="title_activity_maps">Know our world</string>
+    <string name="title_activity_main">MainActivity</string>
 </resources>

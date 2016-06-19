@@ -2,11 +2,12 @@ package aditi.geography;
 
 import android.location.Address;
 import android.location.Geocoder;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
+//import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -45,8 +46,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "Invoking onCreate");
-        Log.d(TAG, "size of countryCapitalMap" + countryCapitalMap.size());
+        //Log.d(TAG, "Invoking onCreate");
+        //Log.d(TAG, "size of countryCapitalMap" + countryCapitalMap.size());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -60,7 +61,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onInit(int status) {
                 if (status == TextToSpeech.ERROR) {
-                    Log.e(TAG, "Failed to initialize text to speech");
+                    //Log.e(TAG, "Failed to initialize text to speech");
                 }
             }
         });
@@ -68,7 +69,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onPause() {
-        Log.d(TAG, "Invoking onPause");
+        //Log.d(TAG, "Invoking onPause");
         if (tts != null) {
             tts.stop();
             tts.shutdown();
@@ -80,7 +81,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     protected void onStop() {
-        Log.d(TAG, "Invoking onStop");
+        //Log.d(TAG, "Invoking onStop");
         if (tts != null) {
             tts.stop();
             tts.shutdown();
@@ -101,7 +102,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 properties.load(stream);
             }
         } catch (Exception e) {
-            Log.e(TAG, "Could not load prop file");
+            //Log.e(TAG, "Could not load prop file");
         }
 
         String line;
@@ -121,7 +122,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
         new LongRunningGetIO().execute();
-        
+
     }
 
     /**
@@ -131,16 +132,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         InputStream inputStream = null;
         try {
             inputStream = SSLUtils.invokeHttpsApi(urlString);
-            Log.d(TAG, "result is " + inputStream.toString());
+            //Log.d(TAG, "result is " + inputStream.toString());
 
         } catch (Exception e) {
-            Log.e(TAG, "Unable to talk to rest countries api", e);
+            //Log.e(TAG, "Unable to talk to rest countries api", e);
         }
 
         try {
             SSLUtils.parseJsonCountriesOutput(inputStream, countryCapitalMap, currencyMap);
         } catch (Exception e) {
-            Log.e(TAG, "unable to parse json output from countries api");
+            //Log.e(TAG, "unable to parse json output from countries api");
         } finally {
             try {
                 inputStream.close();
@@ -193,17 +194,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         selectedCountry = add.get(0).getCountryName();
                         selectedStateOrCountry = selectedCountry;
 
-                        Log.d("country", selectedCountry);
+                        //Log.d("country", selectedCountry);
                         //For usa go with states . All other countries - it gives the capital
                         if (selectedCountry.equalsIgnoreCase("United States") ||
                                 selectedCountry.equalsIgnoreCase("US")) {
                             selectedStateOrCountry = add.get(0).getAdminArea();
                         }
-                        Log.d("state", selectedStateOrCountry);
+                        //Log.d("state", selectedStateOrCountry);
                         ConvertTextToSpeech();
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "Failed to initialize map", e);
+                    //Log.e(TAG, "Failed to initialize map", e);
                 }
             }
         });
@@ -221,10 +222,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private class LongRunningGetIO extends AsyncTask<Void, Void, String> {
         protected String doInBackground(Void... params) {
             try {
-                Log.d(TAG, "invoking capitals rest api");
+                //Log.d(TAG, "invoking capitals rest api");
                 background();
             } catch (Exception e) {
-                Log.e(TAG, "invoking capitals rest api failed", e);
+                //Log.e(TAG, "invoking capitals rest api failed", e);
             }
             return null;
         }
